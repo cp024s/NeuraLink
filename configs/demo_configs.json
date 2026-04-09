@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "name": "edge_small",
+      "rows": 4,
+      "cols": 4,
+      "k": 16,
+      "warmup": 4,
+      "maxbw": 32
+    },
+    {
+      "name": "balanced_mid",
+      "rows": 8,
+      "cols": 8,
+      "k": 32,
+      "warmup": 4,
+      "maxbw": 64
+    },
+    {
+      "name": "throughput_heavy",
+      "rows": 12,
+      "cols": 12,
+      "k": 64,
+      "warmup": 4,
+      "maxbw": 128
+    }
+  ]
+}

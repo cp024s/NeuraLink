@@ -1,0 +1,7 @@
+{
+  "name": "sample_gemm_case",
+  "matrix_a_csv": "inputs/sample_a.csv",
+  "matrix_b_csv": "inputs/sample_b.csv",
+  "warmup": 4,
+  "maxbw": 64
+}
