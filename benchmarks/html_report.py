@@ -115,12 +115,13 @@ def render_capabilities(cap):
   out.append("<thead><tr><th>Capability</th><th>Status</th><th>Notes</th></tr></thead><tbody>")
   for c in caps:
     status = c.get("status", "")
-    if "Implemented" in status:
+    status_l = status.lower()
+    if "validated" in status_l:
+      cls = "status-validated"
+    elif "implemented" in status_l:
       cls = "status-impl"
-    elif "Partial" in status:
-      cls = "status-partial"
     else:
-      cls = "status-plan"
+      cls = "status-dev"
     out.append(f"<tr><td>{c.get('area','')}</td><td><span class='status-pill {cls}'>{status}</span></td><td>{c.get('notes','')}</td></tr>")
   out.append("</tbody></table></div>")
   return "\n".join(out)
@@ -181,22 +182,23 @@ def main():
       --bad: #dc2626;
     }}
     * {{ box-sizing: border-box; }}
-    body {{ margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--bg); color: var(--ink); }}
-    .wrap {{ width: 100vw; min-height: 100vh; margin: 0; padding: 18px; }}
+    html, body {{ width: 100%; height: 100%; }}
+    body {{ margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--bg); color: var(--ink); overflow-x: hidden; }}
+    .wrap {{ width: 100%; min-height: 100vh; margin: 0 auto; padding: clamp(12px, 2vw, 20px); }}
     .hero {{ background: linear-gradient(140deg, #dbeafe, #f8fafc); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; }}
     .hero h1 {{ margin: 0 0 8px; font-size: 30px; }}
     .hero p {{ margin: 4px 0; color: var(--muted); }}
-    .section {{ margin-top: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }}
+    .section {{ margin-top: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; overflow: hidden; }}
     .stat-grid {{ display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }}
     .stat {{ border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #f8fbff; }}
     .stat h3 {{ margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; }}
     .stat p {{ margin: 8px 0 0; font-size: 21px; font-weight: 700; color: var(--accent); }}
-    .plot-grid {{ display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(620px, 1fr)); }}
+    .plot-grid {{ display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }}
     .plot-card {{ border: 1px solid var(--border); border-radius: 10px; padding: 10px; overflow: hidden; background: #fff; }}
     .plot-card h3 {{ margin: 0 0 8px; font-size: 13px; color: #334155; }}
     .plot-card svg {{ width: 100%; height: auto; display: block; }}
     .table-wrap {{ width: 100%; overflow-x: auto; }}
-    .metrics-table {{ width: 100%; min-width: 920px; border-collapse: collapse; font-size: 13px; table-layout: fixed; }}
+    .metrics-table {{ width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; table-layout: fixed; }}
     .metrics-table th, .metrics-table td {{ border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }}
     .metrics-table th {{ background: #ecf2ff; }}
     .metrics-table th, .metrics-table td {{ overflow-wrap: anywhere; word-break: break-word; }}
@@ -208,9 +210,9 @@ def main():
     .compare-card.better {{ background: #ecfdf3; border-color: #bbf7d0; }}
     .compare-card.worse {{ background: #fff7ed; border-color: #fed7aa; }}
     .status-pill {{ padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }}
+    .status-validated {{ background: #dbeafe; color: #1e3a8a; }}
     .status-impl {{ background: #dcfce7; color: #166534; }}
-    .status-partial {{ background: #fef9c3; color: #854d0e; }}
-    .status-plan {{ background: #fee2e2; color: #991b1b; }}
+    .status-dev {{ background: #f1f5f9; color: #334155; }}
     pre {{ background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 10px; overflow-x: auto; }}
     details {{ margin: 8px 0; }}
     @media (max-width: 760px) {{
