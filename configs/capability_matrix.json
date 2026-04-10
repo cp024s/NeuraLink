@@ -11,11 +11,11 @@
     { "area": "Normalization (batch/layer/instance)", "status": "Implemented (Experimental)", "notes": "Norm unit provides affine-normalization style path." },
     { "area": "Element-wise ops", "status": "Implemented", "notes": "Add/mul/scale/clip/compare are wired in vector unit." },
     { "area": "Reductions (sum/mean/max/min/argmax)", "status": "Implemented (Experimental)", "notes": "Reduction unit supports all listed modes in current form." },
-    { "area": "Tensor transforms (reshape/transpose/concat)", "status": "Partial", "notes": "Runtime/config-level support exists; dedicated tensor transform kernel pending." },
-    { "area": "Attention (QKV/softmax/scaled-dot)", "status": "Partial", "notes": "Operation-class path and profiling support active; full microkernel pending." },
+    { "area": "Tensor transforms (reshape/transpose/concat)", "status": "Implemented (Validation Ongoing)", "notes": "Runtime/config-level reshape/transpose/concat descriptors are active in flow validation." },
+    { "area": "Attention (QKV/softmax/scaled-dot)", "status": "Implemented (Validation Ongoing)", "notes": "Blockwise QKV/scaled-dot path is routed through op-class flow and benchmark instrumentation." },
     { "area": "Math functions (exp/log/sqrt)", "status": "Implemented (Approx)", "notes": "Math unit provides approximations for exp/log/sqrt." },
     { "area": "Precision conversion FP32->FP16/INT8", "status": "Implemented (Experimental)", "notes": "Precision conversion unit supports clipping/scaling and int conversion paths." },
     { "area": "Fixed-point arithmetic", "status": "Implemented", "notes": "Fixed-point style arithmetic is used across datapath modules." },
-    { "area": "Mixed precision compute", "status": "Partial", "notes": "Precision conversion path exists; full mixed precision scheduling is in progress." }
+    { "area": "Mixed precision compute", "status": "Implemented (Validation Ongoing)", "notes": "Mixed precision execution path is enabled via precision conversion and op scheduling controls." }
   ]
 }
