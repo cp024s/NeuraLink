@@ -1,0 +1,21 @@
+{
+  "capabilities": [
+    { "area": "GEMM / matrix multiply", "status": "Implemented", "notes": "Systolic MMU path in place; verification depth still improving." },
+    { "area": "Vector operations", "status": "Implemented", "notes": "Vector unit supports add, relu, max, mul in current model." },
+    { "area": "Tensor operations (generic)", "status": "Implemented (Experimental)", "notes": "Descriptor-driven execution and operation-class routing are active." },
+    { "area": "2D/3D convolution", "status": "Implemented (Experimental)", "notes": "Conv unit integrated in top-level operation path; 3D extension pending." },
+    { "area": "Depthwise separable convolution", "status": "Implemented (Experimental)", "notes": "Depthwise mode handled in conv unit with op-class control." },
+    { "area": "Activations: ReLU", "status": "Implemented", "notes": "Activation pipeline currently supports ReLU." },
+    { "area": "Activations: Sigmoid/Tanh", "status": "Implemented (Approx)", "notes": "Approximate sigmoid/tanh paths enabled through vector op modes." },
+    { "area": "Pooling (max/avg/global)", "status": "Implemented (Experimental)", "notes": "Pooling unit supports max/avg/global(max) style behavior." },
+    { "area": "Normalization (batch/layer/instance)", "status": "Implemented (Experimental)", "notes": "Norm unit provides affine-normalization style path." },
+    { "area": "Element-wise ops", "status": "Implemented", "notes": "Add/mul/scale/clip/compare are wired in vector unit." },
+    { "area": "Reductions (sum/mean/max/min/argmax)", "status": "Implemented (Experimental)", "notes": "Reduction unit supports all listed modes in current form." },
+    { "area": "Tensor transforms (reshape/transpose/concat)", "status": "Partial", "notes": "Runtime/config-level support exists; dedicated tensor transform kernel pending." },
+    { "area": "Attention (QKV/softmax/scaled-dot)", "status": "Partial", "notes": "Operation-class path and profiling support active; full microkernel pending." },
+    { "area": "Math functions (exp/log/sqrt)", "status": "Implemented (Approx)", "notes": "Math unit provides approximations for exp/log/sqrt." },
+    { "area": "Precision conversion FP32->FP16/INT8", "status": "Implemented (Experimental)", "notes": "Precision conversion unit supports clipping/scaling and int conversion paths." },
+    { "area": "Fixed-point arithmetic", "status": "Implemented", "notes": "Fixed-point style arithmetic is used across datapath modules." },
+    { "area": "Mixed precision compute", "status": "Partial", "notes": "Precision conversion path exists; full mixed precision scheduling is in progress." }
+  ]
+}
