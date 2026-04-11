@@ -2,7 +2,10 @@
 
 module edge_tpu_top #(
   parameter int ROWS = 4,
-  parameter int COLS = 4
+  parameter int COLS = 4,
+  parameter int DATA_W = accel_pkg::DATA_W,
+  parameter int ACC_W = accel_pkg::ACC_W,
+  parameter int NUM_MEM_BANKS = 4
 ) (
   input logic clk_i,
   input logic rst_ni,
@@ -24,10 +27,25 @@ module edge_tpu_top #(
   tile_desc_t active_desc_q;
   logic active_desc_valid_q;
 
-  logic dma_busy, dma_start, dma_req_valid, dma_req_ready, dma_done;
+  logic issue_load_start, issue_store_start, issue_busy, issue_done_pulse;
+  logic load_done_pulse, store_done_pulse;
+  logic scratch_can_compute, scratch_rd_bank, scratch_wr_bank;
+
+  logic load_dma_busy, load_dma_req_valid, load_dma_req_ready, load_dma_done;
+  logic [31:0] load_dma_req_addr;
+  logic [15:0] load_dma_req_len;
+  logic [15:0] load_done_count_q;
+
+  logic store_dma_busy, store_dma_req_valid, store_dma_req_ready, store_dma_done;
+  logic [31:0] store_dma_req_addr;
+  logic [15:0] store_dma_req_len;
+  logic [15:0] store_done_count_q;
+
+  logic dma_req_valid, dma_req_ready;
   logic [31:0] dma_req_addr;
   logic [15:0] dma_req_len;
-  logic [15:0] dma_done_count_q;
+  logic [31:0] dma_req_addr_mapped;
+  logic [$clog2(NUM_MEM_BANKS)-1:0] dma_req_bank_sel;
 
   logic signed [DATA_W-1:0] a_west [ROWS];
   logic signed [DATA_W-1:0] b_north [COLS];
@@ -69,41 +87,56 @@ module edge_tpu_top #(
     .empty_o(sched_empty)
   );
 
-  always_comb begin
-    sched_pop = 1'b0;
-    dma_start = 1'b0;
-    seq_start = 1'b0;
-    dma_done = 1'b0;
+  decoupled_issue_ctrl u_decoupled_issue_ctrl (
+    .clk_i(clk_i),
+    .rst_ni(rst_ni),
+    .sched_valid_i(sched_valid),
+    .load_done_i(load_done_pulse),
+    .compute_done_i(seq_done),
+    .store_done_i(store_done_pulse),
+    .can_compute_i(scratch_can_compute),
+    .sched_pop_o(sched_pop),
+    .load_start_o(issue_load_start),
+    .compute_start_o(seq_start),
+    .store_start_o(issue_store_start),
+    .busy_o(issue_busy),
+    .done_pulse_o(issue_done_pulse)
+  );
 
-    if (sched_valid && !active_desc_valid_q && !dma_busy && !seq_busy) begin
-      sched_pop = 1'b1;
-      dma_start = 1'b1;
-    end
-
-    // Simple DMA completion model for integration-level simulation.
-    if (dma_busy && (dma_done_count_q == 16'd1)) begin
-      dma_done = 1'b1;
-      seq_start = 1'b1;
-    end
-  end
+  pingpong_buffer_ctrl u_pingpong_buffer_ctrl (
+    .clk_i(clk_i),
+    .rst_ni(rst_ni),
+    .load_done_i(load_done_pulse),
+    .compute_done_i(seq_done),
+    .rd_bank_o(scratch_rd_bank),
+    .wr_bank_o(scratch_wr_bank),
+    .can_compute_o(scratch_can_compute)
+  );
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       active_desc_q <= '0;
       active_desc_valid_q <= 1'b0;
-      dma_done_count_q <= '0;
+      load_done_count_q <= '0;
+      store_done_count_q <= '0;
       switch_event_count_q <= '0;
       result00_q <= '0;
     end else begin
       if (sched_pop) begin
         active_desc_q <= sched_desc;
         active_desc_valid_q <= 1'b1;
-        dma_done_count_q <= (sched_desc.m + sched_desc.n + 16'd2);
-      end else if (dma_busy && (dma_done_count_q != 0)) begin
-        dma_done_count_q <= dma_done_count_q - 1'b1;
+        load_done_count_q <= (sched_desc.m + sched_desc.n + 16'd2);
+      end else if (load_dma_busy && (load_done_count_q != 0)) begin
+        load_done_count_q <= load_done_count_q - 1'b1;
       end
 
-      if (seq_done) begin
+      if (issue_store_start) begin
+        store_done_count_q <= (active_desc_q.m + 16'd2);
+      end else if (store_dma_busy && (store_done_count_q != 0)) begin
+        store_done_count_q <= store_done_count_q - 1'b1;
+      end
+
+      if (issue_done_pulse) begin
         active_desc_valid_q <= 1'b0;
       end
 
@@ -114,22 +147,62 @@ module edge_tpu_top #(
     end
   end
 
-  tile_dma u_tile_dma (
+  assign load_done_pulse = load_dma_busy && (load_done_count_q == 16'd1);
+  assign load_dma_done = load_done_pulse;
+  assign store_done_pulse = store_dma_busy && (store_done_count_q == 16'd1);
+  assign store_dma_done = store_done_pulse;
+
+  tile_dma u_tile_dma_load (
     .clk_i(clk_i),
     .rst_ni(rst_ni),
-    .start_i(dma_start),
+    .start_i(issue_load_start),
     .base_addr_i(active_desc_q.a_base),
+    .rows_i(active_desc_q.m),
+    .cols_i(active_desc_q.k),
+    .stride_i(active_desc_q.n),
+    .busy_o(load_dma_busy),
+    .req_valid_o(load_dma_req_valid),
+    .req_addr_o(load_dma_req_addr),
+    .req_len_o(load_dma_req_len),
+    .req_ready_i(load_dma_req_ready),
+    .done_i(load_dma_done)
+  );
+
+  tile_dma u_tile_dma_store (
+    .clk_i(clk_i),
+    .rst_ni(rst_ni),
+    .start_i(issue_store_start),
+    .base_addr_i(active_desc_q.c_base),
     .rows_i(active_desc_q.m),
     .cols_i(active_desc_q.n),
     .stride_i(active_desc_q.n),
-    .busy_o(dma_busy),
-    .req_valid_o(dma_req_valid),
-    .req_addr_o(dma_req_addr),
-    .req_len_o(dma_req_len),
-    .req_ready_i(dma_req_ready),
-    .done_i(dma_done)
+    .busy_o(store_dma_busy),
+    .req_valid_o(store_dma_req_valid),
+    .req_addr_o(store_dma_req_addr),
+    .req_len_o(store_dma_req_len),
+    .req_ready_i(store_dma_req_ready),
+    .done_i(store_dma_done)
   );
+
+  // Priority arbiter: keep load traffic ahead of store traffic.
+  always_comb begin
+    dma_req_valid = load_dma_req_valid | store_dma_req_valid;
+    dma_req_addr = load_dma_req_valid ? load_dma_req_addr : store_dma_req_addr;
+    dma_req_len = load_dma_req_valid ? load_dma_req_len : store_dma_req_len;
+  end
   assign dma_req_ready = 1'b1;
+  assign load_dma_req_ready = 1'b1;
+  assign store_dma_req_ready = 1'b1;
+
+  bank_addr_mapper #(
+    .ADDR_W(32),
+    .NUM_BANKS(NUM_MEM_BANKS)
+  ) u_bank_addr_mapper (
+    .addr_i(dma_req_addr),
+    .bank_skew_i({($clog2(NUM_MEM_BANKS)){scratch_wr_bank}}),
+    .bank_sel_o(dma_req_bank_sel),
+    .bank_addr_o(dma_req_addr_mapped)
+  );
 
   instruction_sequencer #(
     .ROWS(ROWS),
@@ -332,11 +405,9 @@ module edge_tpu_top #(
     .out_data_o(switch_data)
   );
 
-  // NoC and counters are integrated early so instrumentation is available
-  // as architecture complexity increases.
   assign noc_in_valid = dma_req_valid | switch_valid;
   assign noc_in_flit = dma_req_valid ?
-    {16'hd00d, dma_req_addr, dma_req_len} :
+    {14'h2aa, dma_req_bank_sel, dma_req_addr_mapped, dma_req_len} :
     {56'd0, switch_data};
   assign noc_out_ready = 1'b1;
 
@@ -364,10 +435,19 @@ module edge_tpu_top #(
     .noc_flit_count_o(noc_flit_count)
   );
 
-  assign busy_o = active_desc_valid_q | dma_busy | seq_busy;
-  assign done_o = seq_done;
+  assign busy_o = issue_busy | load_dma_busy | store_dma_busy | seq_busy | active_desc_valid_q;
+  assign done_o = issue_done_pulse;
   assign pe_active_cycles_o = pe_active_cycles;
   assign pe_idle_cycles_o = pe_idle_cycles;
   assign dma_stall_cycles_o = dma_stall_cycles;
   assign noc_flit_count_o = noc_flit_count + switch_event_count_q;
+
+`ifndef SYNTHESIS
+  always_ff @(posedge clk_i) begin
+    if (rst_ni) begin
+      assert (!(issue_load_start && issue_store_start))
+        else $error("load/store cannot start in same cycle");
+    end
+  end
+`endif
 endmodule
