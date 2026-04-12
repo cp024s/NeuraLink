@@ -4,8 +4,12 @@ import csv
 import json
 import pathlib
 import subprocess
+import random
 
 from benchmark_runner import parse_metrics
+from logging_utils import get_logger
+
+LOG = get_logger("process_input_case")
 
 
 def load_matrix_csv(path: pathlib.Path):
@@ -17,6 +21,11 @@ def load_matrix_csv(path: pathlib.Path):
         continue
       matrix.append([float(x) for x in row])
   return matrix
+
+
+def gen_matrix(rows: int, cols: int, low: int, high: int, seed: int):
+  rng = random.Random(seed)
+  return [[float(rng.randint(low, high)) for _ in range(cols)] for _ in range(rows)]
 
 
 def matmul(a, b):
@@ -130,21 +139,36 @@ def main() -> None:
   parser = argparse.ArgumentParser()
   parser.add_argument("--config", required=True, help="Input case JSON config path")
   parser.add_argument("--out-dir", required=True, help="Output directory")
+  parser.add_argument("--rows", type=int, help="Override rows for generated input")
+  parser.add_argument("--cols", type=int, help="Override cols for generated input")
+  parser.add_argument("--k", type=int, help="Override k for generated input")
+  parser.add_argument("--seed", type=int, default=11, help="Seed for generated input")
   args = parser.parse_args()
 
   cfg = json.loads(pathlib.Path(args.config).read_text())
+  LOG.info("Processing input case config: %s", args.config)
   root = pathlib.Path(__file__).resolve().parent.parent
   out_dir = pathlib.Path(args.out_dir)
   out_dir.mkdir(parents=True, exist_ok=True)
 
-  a_path = root / cfg["matrix_a_csv"]
-  b_path = root / cfg["matrix_b_csv"]
   case_name = cfg.get("name", "input_case")
   warmup = int(cfg.get("warmup", 4))
   maxbw = int(cfg.get("maxbw", 64))
+  mode = cfg.get("mode", "csv")
 
-  a = load_matrix_csv(a_path)
-  b = load_matrix_csv(b_path)
+  if mode == "generated":
+    m = int(args.rows or cfg.get("rows", 4))
+    n = int(args.cols or cfg.get("cols", 4))
+    k = int(args.k or cfg.get("k", 4))
+    val_low = int(cfg.get("value_low", -3))
+    val_high = int(cfg.get("value_high", 6))
+    a = gen_matrix(m, k, val_low, val_high, args.seed)
+    b = gen_matrix(k, n, val_low, val_high, args.seed + 1)
+  else:
+    a_path = root / cfg["matrix_a_csv"]
+    b_path = root / cfg["matrix_b_csv"]
+    a = load_matrix_csv(a_path)
+    b = load_matrix_csv(b_path)
 
   if not a or not b:
     raise ValueError("Input matrices must be non-empty.")
@@ -170,6 +194,7 @@ def main() -> None:
     str(sim_log),
   ]
   subprocess.run(run_cmd, cwd=root, check=True)
+  LOG.debug("Simulation log generated at %s", sim_log)
 
   metrics = parse_metrics(sim_log)
   metrics["name"] = case_name
@@ -208,7 +233,7 @@ def main() -> None:
     f"- Metric chart: `{case_name}_metrics_chart.svg`",
   ]
   (out_dir / f"{case_name}_summary.md").write_text("\n".join(summary) + "\n")
-  print(f"Input case processed. Artifacts in: {out_dir}")
+  LOG.info("Input case processed. Artifacts in: %s", out_dir)
 
 
 if __name__ == "__main__":
