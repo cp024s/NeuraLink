@@ -1,0 +1,49 @@
+{
+  "runs": [
+    {
+      "name": "gemm_reference",
+      "op_type": "gemm",
+      "rows": 8,
+      "cols": 8,
+      "k": 32,
+      "warmup": 4,
+      "maxbw": 64
+    },
+    {
+      "name": "conv2d_profile",
+      "op_type": "conv2d",
+      "rows": 8,
+      "cols": 8,
+      "k": 32,
+      "warmup": 4,
+      "maxbw": 64
+    },
+    {
+      "name": "depthwise_profile",
+      "op_type": "depthwise_conv",
+      "rows": 8,
+      "cols": 8,
+      "k": 32,
+      "warmup": 4,
+      "maxbw": 64
+    },
+    {
+      "name": "attention_qkv_profile",
+      "op_type": "attention_qkv",
+      "rows": 8,
+      "cols": 8,
+      "k": 64,
+      "warmup": 4,
+      "maxbw": 64
+    },
+    {
+      "name": "reduction_profile",
+      "op_type": "reduction",
+      "rows": 8,
+      "cols": 8,
+      "k": 16,
+      "warmup": 4,
+      "maxbw": 64
+    }
+  ]
+}
