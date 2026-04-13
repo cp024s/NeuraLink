@@ -1,0 +1,8 @@
+{
+  "name": "input_medium_6x6",
+  "mode": "csv",
+  "matrix_a_csv": "inputs/case_medium_a.csv",
+  "matrix_b_csv": "inputs/case_medium_b.csv",
+  "warmup": 4,
+  "maxbw": 80
+}
