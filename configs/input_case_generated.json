@@ -1,0 +1,11 @@
+{
+  "name": "generated_case",
+  "mode": "generated",
+  "rows": 8,
+  "cols": 8,
+  "k": 16,
+  "value_low": -4,
+  "value_high": 6,
+  "warmup": 4,
+  "maxbw": 80
+}
