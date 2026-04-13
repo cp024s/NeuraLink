@@ -1,0 +1,9 @@
+{
+  "name": "Conventional Edge Baseline (Modeled)",
+  "note": "This is a modeled baseline profile for comparative analysis, not direct vendor hardware measurement.",
+  "baseline_metrics": {
+    "latency_cycles": 62.0,
+    "throughput_ops_per_cycle": 34.0,
+    "efficiency": 0.56
+  }
+}
