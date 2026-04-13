@@ -1,0 +1,12 @@
+{
+  "runs": [
+    { "name": "tiny_edge", "rows": 2, "cols": 2, "k": 8, "warmup": 4, "maxbw": 24 },
+    { "name": "small_edge", "rows": 4, "cols": 4, "k": 16, "warmup": 4, "maxbw": 32 },
+    { "name": "rect_tall", "rows": 12, "cols": 4, "k": 48, "warmup": 4, "maxbw": 64 },
+    { "name": "rect_wide", "rows": 4, "cols": 12, "k": 48, "warmup": 4, "maxbw": 64 },
+    { "name": "balanced_mid", "rows": 8, "cols": 8, "k": 32, "warmup": 4, "maxbw": 64 },
+    { "name": "balanced_large", "rows": 12, "cols": 12, "k": 64, "warmup": 4, "maxbw": 128 },
+    { "name": "deep_k", "rows": 8, "cols": 8, "k": 128, "warmup": 6, "maxbw": 128 },
+    { "name": "bw_stressed", "rows": 12, "cols": 12, "k": 64, "warmup": 4, "maxbw": 48 }
+  ]
+}
