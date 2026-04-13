@@ -1,0 +1,8 @@
+{
+  "name": "input_small_3x3",
+  "mode": "csv",
+  "matrix_a_csv": "inputs/case_small_a.csv",
+  "matrix_b_csv": "inputs/case_small_b.csv",
+  "warmup": 4,
+  "maxbw": 48
+}
