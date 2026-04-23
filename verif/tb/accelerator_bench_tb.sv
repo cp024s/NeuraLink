@@ -23,6 +23,7 @@ module accelerator_bench_tb;
   int k_dim;
   int warmup_cycles;
   int max_bw_bytes_per_cycle;
+  int op_class;
 
   int cycle_count;
   int feed_count;
@@ -100,12 +101,14 @@ module accelerator_bench_tb;
     k_dim = 32;
     warmup_cycles = 4;
     max_bw_bytes_per_cycle = 64;
+    op_class = 0;
 
     ignored = $value$plusargs("ROWS=%d", active_rows);
     ignored = $value$plusargs("COLS=%d", active_cols);
     ignored = $value$plusargs("K=%d", k_dim);
     ignored = $value$plusargs("WARMUP=%d", warmup_cycles);
     ignored = $value$plusargs("MAXBW=%d", max_bw_bytes_per_cycle);
+    ignored = $value$plusargs("OPCLASS=%d", op_class);
 
     if (active_rows < 1) active_rows = 1;
     if (active_cols < 1) active_cols = 1;
@@ -125,6 +128,18 @@ module accelerator_bench_tb;
     clear_i = 1'b0;
 
     expected_latency = k_dim + active_rows + active_cols + PIPELINE_DEPTH - 2;
+    case (op_class)
+      1: expected_latency = (expected_latency * 95) / 100;   // vector
+      2: expected_latency = (expected_latency * 120) / 100;  // conv2d
+      3: expected_latency = (expected_latency * 110) / 100;  // depthwise
+      4: expected_latency = (expected_latency * 85) / 100;   // pooling
+      5: expected_latency = (expected_latency * 125) / 100;  // normalization
+      6: expected_latency = (expected_latency * 90) / 100;   // reduction
+      7: expected_latency = (expected_latency * 145) / 100;  // attention
+      8: expected_latency = (expected_latency * 130) / 100;  // math
+      default: expected_latency = expected_latency;
+    endcase
+    if (expected_latency < 2) expected_latency = 2;
     for (cycle_count = 0; cycle_count < expected_latency; cycle_count++) begin
       drive_stream_step(feed_count);
       if (feed_count < k_dim) begin
@@ -137,6 +152,17 @@ module accelerator_bench_tb;
     repeat (2) @(posedge clk);
 
     total_mac_ops = active_rows * active_cols * k_dim;
+    case (op_class)
+      1: total_mac_ops = total_mac_ops / 2;
+      2: total_mac_ops = (total_mac_ops * 11) / 10;
+      3: total_mac_ops = (total_mac_ops * 3) / 5;
+      4: total_mac_ops = total_mac_ops / 4;
+      5: total_mac_ops = total_mac_ops / 3;
+      6: total_mac_ops = total_mac_ops / 5;
+      7: total_mac_ops = (total_mac_ops * 13) / 10;
+      8: total_mac_ops = (total_mac_ops * 7) / 10;
+      default: total_mac_ops = total_mac_ops;
+    endcase
     throughput_ops_per_cycle = real'(total_mac_ops) / real'(expected_latency);
     peak_ops_possible = active_rows * active_cols * expected_latency;
     efficiency = real'(total_mac_ops) / real'(peak_ops_possible);
@@ -152,6 +178,7 @@ module accelerator_bench_tb;
     $display("METRIC bandwidth_utilization=%0f", bandwidth_utilization);
     $display("METRIC pipeline_depth=%0d", PIPELINE_DEPTH);
     $display("METRIC total_mac_ops=%0d", total_mac_ops);
+    $display("METRIC op_class=%0d", op_class);
     $finish;
   end
 endmodule
