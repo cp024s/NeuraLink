@@ -2,11 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/scripts/common/logging.sh"
 OUT_DIR="${1:-$ROOT_DIR/results/synth_check}"
 mkdir -p "$OUT_DIR"
 
 if ! command -v yosys >/dev/null 2>&1; then
-  echo "yosys is not installed; skipping synthesis check."
+  log_warn "yosys is not installed; skipping synthesis check."
   exit 0
 fi
 
@@ -38,9 +39,9 @@ proc; opt; fsm; opt; memory; opt
 stat
 write_json $OUT_DIR/edge_tpu_top_synth.json
 " >"$OUT_DIR/yosys_stat.log" 2>&1; then
-  echo "yosys synthesis check could not complete with current tool support."
-  echo "See $OUT_DIR/yosys_stat.log for details."
+  log_warn "yosys synthesis check could not complete with current tool support."
+  log_info "See $OUT_DIR/yosys_stat.log for details."
   exit 0
 fi
 
-echo "Synthesis check completed: $OUT_DIR/yosys_stat.log"
+log_success "Synthesis check completed: $OUT_DIR/yosys_stat.log"
