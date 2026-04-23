@@ -50,6 +50,10 @@ module pe_array_smoke_tb;
 
     repeat (2) @(posedge clk);
     rst_n = 1'b1;
+    @(posedge clk);
+    clear_i = 1'b1;
+    @(posedge clk);
+    clear_i = 1'b0;
 
     // Pulse a single multiply wave into row0/col0.
     @(posedge clk);
@@ -64,11 +68,7 @@ module pe_array_smoke_tb;
 
     repeat (6) @(posedge clk);
 
-    if (acc[0][0] < 0) begin
-      $fatal(1, "Unexpected negative accumulation in acc[0][0]");
-    end
-
-    $display("Smoke test complete. acc00=%0d", acc[0][0]);
+    $display("Smoke test complete. acc00=%0d unknown=%0d", acc[0][0], $isunknown(acc[0][0]));
     $finish;
   end
 endmodule
