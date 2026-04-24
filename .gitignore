@@ -4,3 +4,6 @@ third_party/repos/
 *.out
 __pycache__/
 *.pyc
+archive/
+build/vivado/
+build/pd/
