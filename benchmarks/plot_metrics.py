@@ -5,6 +5,9 @@ import math
 import pathlib
 from collections import defaultdict
 
+from logging_utils import get_logger
+
+LOG = get_logger("plot_metrics")
 
 def load_rows(csv_path: pathlib.Path):
   rows = []
@@ -400,7 +403,7 @@ def main() -> None:
   write_scatter(out_dir / "throughput_vs_latency_scatter.svg", "Throughput vs latency", lat, thr, "Latency (cycles)", "Throughput (ops/cycle)")
   write_heatmap(out_dir / "throughput_heatmap_rows_cols.svg", "Throughput heatmap (rows x cols)", row_vals, col_vals, thr, "Columns", "Rows")
   write_operation_trace(out_dir / "operation_trace.svg", names, lat)
-  print(f"Charts generated in: {out_dir}")
+  LOG.info("Charts generated in: %s", out_dir)
 
 
 if __name__ == "__main__":
