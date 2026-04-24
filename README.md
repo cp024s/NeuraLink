@@ -1,127 +1,98 @@
-# Research-Grade Edge TPU Accelerator Project
+# NeuraLink
 
-This repository is a demo-ready accelerator development framework focused on:
-- Memory-aware architecture decisions.
-- Scalable and modular RTL.
-- Reproducible performance benchmarking and reporting.
+![Status](https://img.shields.io/badge/status-active%20development-1f6feb)
+![RTL](https://img.shields.io/badge/RTL-SystemVerilog-0b7285)
+![FPGA](https://img.shields.io/badge/FPGA-Vivado%20TCL%20Flow-6f42c1)
+![PD](https://img.shields.io/badge/PD-OpenROAD%20Research-8a5b00)
 
-## Project maturity
+NeuraLink is a production-oriented accelerator project built as a RISC-V coprocessor platform, with emphasis on memory-aware dataflow, sparse-attention readiness, FPGA validation, and PD-compatible structure.
 
-This is an **early-stage proof of work**, not a production-ready milestone.
-It is intentionally structured for fast architectural iteration, validation, and stakeholder demos.
+## Introduction
 
-## What is included
+The project targets real bottlenecks seen in modern transformer-class workloads:
 
-- Research blueprint and architecture notes:
-  - `docs/research_grade_accelerator_blueprint.md`
-  - `docs/architecture/reference_integration_plan.md`
-- Modular RTL scaffolding:
-  - PE and PE array (`rtl/core`)
-  - Memory primitives and DMA template (`rtl/memory`)
-  - Integration shell (`rtl/top`)
-- Verification starter assets:
-  - Smoke and benchmark testbenches (`verif/tb`)
-  - Assertion scaffold (`verif/sva`)
-- Benchmark automation:
-  - `benchmarks/benchmark_runner.py`
-  - `benchmarks/metrics_report.py`
-- End-to-end scripts and orchestration:
-  - `scripts/*.sh`
-  - `Makefile`
+- Memory bandwidth pressure and DRAM round-trip overhead
+- Compute underutilization from irregular sequence lengths and sparse patterns
+- Pipeline stalls from coupled control/data movement
+- KV-cache traffic growth during decoding
 
-## Quick start
+## Project Overview
 
-```bash
-make build
-make run
-make report
-make plots
-```
+NeuraLink uses separate control and data paths:
 
-Or run full demo:
+- Control path:
+  - command queue
+  - scheduler and sequencer
+  - backpressure/credit logic
+  - completion and performance telemetry
+- Data path:
+  - dual DMA engines
+  - bank-aware mapping and scratchpad buffering
+  - systolic/vector/op-class compute units
 
-```bash
-make demo
-```
+RISC-V coprocessor integration is designed around MMIO descriptor offload first, with custom instruction offload as phase-2.
 
-Run a data-driven input case (matrix CSV inputs -> output matrix + visualizations):
+## Configuration
 
-```bash
-make input
-```
+Main configuration lives in:
 
-Run with a custom input-case config:
+- `configs/demo_configs.json`
+- `configs/diverse_benchmark_suite.json`
+- `configs/operation_experiments.json`
+- `configs/capability_matrix.json`
+- `configs/baseline_equivalent.json`
 
-```bash
-make input INPUT_CONFIG=/absolute/path/to/input_case.json INPUT_OUT=results/my_case
-```
+Flow-level configuration knobs include:
 
-## Outputs
+- `VIVADO_MODE` (`wsl` or `win`)
+- `VIVADO_BAT`
+- `TOP_MODULE`
+- `FPGA_PART`
+- `PDK_NAME`
 
-By default, sweep outputs are written to:
-- `results/latest/metrics.json`
-- `results/latest/metrics.csv`
-- `results/latest/*.log`
+## Features & Applications
 
-Report generation writes:
-- `results/latest/summary.md`
+- Systolic matrix compute with vector and auxiliary op pipelines
+- Decoupled load/compute/store orchestration
+- Block-sparse scheduling hooks for attention workloads
+- KV paging and cache management hooks
+- FlashAttention-style tiling strategy documentation and integration plan
+- End-to-end benchmark generation with HTML and visual analytics
+- FPGA TCL flow and OpenROAD research flow scaffolds
 
-Plot generation writes:
-- `results/latest/throughput_by_config.svg`
-- `results/latest/latency_by_config.svg`
-- `results/latest/efficiency_vs_bandwidth.svg`
+Representative applications:
 
-Input-case generation writes:
-- `results/input_case_latest/*_output.csv`
-- `results/input_case_latest/*_output_heatmap.svg`
-- `results/input_case_latest/*_metrics_chart.svg`
+- Transformer inference coprocessor research
+- Edge AI acceleration experiments
+- Architecture/perf tradeoff studies for memory-centric workloads
 
-`make demo` writes to a timestamped folder under `results/`.
+## Benchmarks
 
-## Metrics captured
+Benchmark outputs include:
 
-- `latency_cycles`
-- `throughput_ops_per_cycle`
-- `efficiency`
-- `bandwidth_utilization`
-- `pipeline_depth`
-- `total_mac_ops`
+- latency, throughput, efficiency, bandwidth utilization, pipeline metrics
+- baseline comparison summaries
+- charts and consolidated HTML reports
 
-## Reference repositories
+Detailed run steps are separated into dedicated docs.
 
-Clone/update curated references:
+## Repository Structure
 
-```bash
-make refs
-```
+- `rtl/`: compute, control, memory, interconnect, and top-level modules
+- `verif/`: unit and integration testbenches plus assertion scaffolding
+- `benchmarks/`: parsers, runners, plotting, report generation, UI server
+- `scripts/`: setup, simulation, FPGA TCL flow, PD flow
+- `docs/`: architecture, execution, FPGA, PD, board guidance
+- `configs/`: experiment and capability profiles
 
-For heavy industrial repository pull (optional):
+## Documentation
 
-```bash
-INCLUDE_HEAVY=1 make refs
-```
-
-Use your local reference folder (`D:\Repositories\ref_repos`) instead of remote clone:
-
-```bash
-USE_LOCAL_REF_REPOS=1 make refs
-```
-
-## Resetting state
-
-For a fresh run state:
-
-```bash
-make clean
-```
-
-For a deep reset including downloaded/cloned references:
-
-```bash
-make distclean
-```
-
-## Notes
-
-- Current benchmark flow is cycle-analytic and simulation-backed, suitable for comparative studies.
-- FPGA mapping is planned as phase-2 after RTL and instrumentation maturity.
+- Execution steps: [execution_steps.md](/mnt/d/Repositories/Res_proj/docs/execution_steps.md)
+- Full architecture: [full_system_architecture.md](/mnt/d/Repositories/Res_proj/docs/architecture/full_system_architecture.md)
+- CPU/offload selection: [cpu_selection_and_offload.md](/mnt/d/Repositories/Res_proj/docs/architecture/cpu_selection_and_offload.md)
+- RISC-V coprocessor integration: [riscv_coprocessor_integration.md](/mnt/d/Repositories/Res_proj/docs/architecture/riscv_coprocessor_integration.md)
+- Transformer dataflow/sparsity: [transformer_dataflow_and_sparsity.md](/mnt/d/Repositories/Res_proj/docs/architecture/transformer_dataflow_and_sparsity.md)
+- FPGA flow: [fpga_vivado_flow.md](/mnt/d/Repositories/Res_proj/docs/flows/fpga_vivado_flow.md)
+- PD flow: [pd_openroad_flow.md](/mnt/d/Repositories/Res_proj/docs/flows/pd_openroad_flow.md)
+- Board recommendations: [fpga_board_recommendations.md](/mnt/d/Repositories/Res_proj/docs/flows/fpga_board_recommendations.md)
+- Version-control workflow: [version_control_guidelines.md](/mnt/d/Repositories/Res_proj/docs/workflows/version_control_guidelines.md)
