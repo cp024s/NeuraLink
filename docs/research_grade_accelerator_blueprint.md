@@ -1,5 +1,11 @@
 # Research-Grade TPU / Edge AI Accelerator Blueprint
 
+## Originality and educational policy
+
+- This blueprint is TPU-inspired at a conceptual level only.
+- No external code or implementation structures are copied.
+- The design is authored for educational research and proof-of-work evaluation.
+
 ## 1) Design Target
 
 Build a scalable accelerator that is **memory-first**:
@@ -47,6 +53,19 @@ Build a scalable accelerator that is **memory-first**:
    - Lightweight packet NoC for activation/weight/partial exchanges.
 5. **Special Function Units (optional path)**
    - LayerNorm, softmax helper, activation units.
+
+## 3.1) TPU-inspired component checklist
+
+- Matrix multiplication units as primary engines (MMU cluster).
+- Systolic array as core compute fabric.
+- Vector processing unit for elementwise and reduction tails.
+- DDR-preferred memory subsystem with DMA overlap.
+- On-chip global buffer and scratchpad hierarchy.
+- Optional software-managed cache region for recurrent tensors.
+- Packetized interconnect and data switch routing.
+- Activation pipelines after MMU/VPU execution.
+- Instruction sequencer/control unit for tile issue.
+- SerDes boundary blocks for scale-out modes.
 
 ## 4) Dataflow Strategy (Runtime-Selectable)
 
