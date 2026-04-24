@@ -6,11 +6,15 @@ import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
+from logging_utils import get_logger
+
+LOG = get_logger("web_ui_server")
 
 def run_single(root: pathlib.Path, payload: dict):
   out_dir = root / "results" / "live_ui"
   out_dir.mkdir(parents=True, exist_ok=True)
   run_name = payload.get("run_name", "ui_run")
+  LOG.info("UI-triggered run: %s", run_name)
   rows = int(payload.get("rows", 8))
   cols = int(payload.get("cols", 8))
   k = int(payload.get("k", 32))
@@ -118,7 +122,7 @@ def main():
   args = ap.parse_args()
   Handler.root = pathlib.Path(args.root).resolve()
   httpd = HTTPServer(("0.0.0.0", args.port), Handler)
-  print(f"UI server running at http://localhost:{args.port}")
+  LOG.info("UI server running at http://localhost:%s", args.port)
   httpd.serve_forever()
 
 
