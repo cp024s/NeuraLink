@@ -5,6 +5,7 @@ import json
 import pathlib
 from statistics import mean, median
 
+from logging_utils import get_logger
 
 SVG_FILES = [
   "throughput_by_config.svg",
@@ -19,6 +20,7 @@ SVG_FILES = [
   "throughput_heatmap_rows_cols.svg",
   "operation_trace.svg",
 ]
+LOG = get_logger("html_report")
 
 
 def load_csv(path: pathlib.Path):
@@ -264,7 +266,7 @@ def main():
 </html>
 """
   out_html.write_text(html)
-  print(f"HTML report generated: {out_html}")
+  LOG.info("HTML report generated: %s", out_html)
 
 
 if __name__ == "__main__":
