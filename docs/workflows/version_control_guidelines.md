@@ -22,6 +22,34 @@ These practices are recommended while the project is still in rapid iteration mo
   - Metrics artifacts are generated.
   - Documentation for new commands is updated.
 
+## Issue and PR discipline
+
+- Track each enhancement/bug as a GitHub issue.
+- Reference issue IDs in PR titles and commit messages.
+- Use draft PRs for long-running RTL feature branches.
+- Require at least one review for `main` and `stable` merges.
+
+## Milestones and releases
+
+- Tag milestone drops with semantic labels such as:
+  - `v0.1-rtl-bringup`
+  - `v0.2-fpga-flow`
+  - `v0.3-pd-research`
+- Create release notes with:
+  - validated boards
+  - known limitations
+  - reproduction commands
+
+## Actions, Wiki, and Packages
+
+- GitHub Actions:
+  - run lint/smoke/testbench targets on every PR
+  - archive benchmark artifacts on tagged runs
+- Wiki:
+  - mirror setup/execution docs for quick onboarding
+- Packages:
+  - publish prebuilt simulation containers or tool images where useful
+
 ## Cherry-pick usage
 
 - Use cherry-pick for selective backporting of:
