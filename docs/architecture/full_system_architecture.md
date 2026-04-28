@@ -59,6 +59,8 @@ flowchart LR
 - `Decoupled issue controller`: independent load/compute/store progression.
 - `Instruction sequencer`: emits per-cycle feed/valid patterns for compute fabric.
 - `Perf/status`: done/busy/counters for host-side orchestration and debug.
+- `Backpressure controller`: credit-based stall gating under burst pressure.
+- `Block sparse scheduler`: deterministic active-block iteration for sparse attention.
 
 ## 5. Dataflow Modes
 
@@ -91,3 +93,28 @@ Current selection is descriptor-driven (`tile_desc.mode`) and intended to be tun
 - Current: script-driven simulation entry and descriptor injection through testbench.
 - Next: explicit host-facing MMIO register map and command ring doorbell.
 - Planned for FPGA phase: AXI-Lite control + AXI memory master DMA.
+
+## 9. Explicit Control/Data Path Separation
+
+```mermaid
+flowchart LR
+  subgraph CTRL["Control Path"]
+    CQ["Command Queue"]
+    SCHED["Scheduler + Sequencer"]
+    BP["Backpressure Controller"]
+    IRQ["Status/IRQ/Perf"]
+  end
+
+  subgraph DATA["Data Path"]
+    LDST["Dual DMA"]
+    SPM["Scratchpad + KV Pager"]
+    FAB["MMU/Vector/Op Units"]
+    SW["Data Switch"]
+  end
+
+  CQ --> SCHED --> LDST
+  BP --> SCHED
+  LDST --> SPM --> FAB --> SW --> LDST
+  FAB --> IRQ
+  SCHED --> IRQ
+```
