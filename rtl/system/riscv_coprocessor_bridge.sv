@@ -33,6 +33,10 @@ module riscv_coprocessor_bridge (
   localparam logic [7:0] REG_PERF_IDLE = 8'h24;
   localparam logic [7:0] REG_PERF_DMA  = 8'h28;
   localparam logic [7:0] REG_PERF_NOC  = 8'h2c;
+  localparam logic [7:0] REG_STRIDE_A  = 8'h30;
+  localparam logic [7:0] REG_STRIDE_B  = 8'h34;
+  localparam logic [7:0] REG_STRIDE_C  = 8'h38;
+  localparam logic [7:0] REG_PRECFLOW  = 8'h3c;
 
   logic start_pending_q;
   logic irq_en_q;
@@ -66,6 +70,9 @@ module riscv_coprocessor_bridge (
           REG_A_BASE: desc_q.a_base <= mmio_wdata_i;
           REG_B_BASE: desc_q.b_base <= mmio_wdata_i;
           REG_C_BASE: desc_q.c_base <= mmio_wdata_i;
+          REG_STRIDE_A: desc_q.stride_a <= mmio_wdata_i[15:0];
+          REG_STRIDE_B: desc_q.stride_b <= mmio_wdata_i[15:0];
+          REG_STRIDE_C: desc_q.stride_c <= mmio_wdata_i[15:0];
           REG_MODE: begin
             desc_q.mode <= mmio_wdata_i[1:0];
             desc_q.k <= mmio_wdata_i[31:16];
@@ -73,6 +80,10 @@ module riscv_coprocessor_bridge (
           REG_OPCLASS: begin
             desc_q.op_class <= mmio_wdata_i[3:0];
             desc_q.sparse_en <= mmio_wdata_i[8];
+          end
+          REG_PRECFLOW: begin
+            desc_q.precision <= mmio_wdata_i[1:0];
+            desc_q.dep_flags <= mmio_wdata_i[7:4];
           end
           default: begin
           end
@@ -95,8 +106,12 @@ module riscv_coprocessor_bridge (
       REG_A_BASE:    mmio_rdata_o = desc_q.a_base;
       REG_B_BASE:    mmio_rdata_o = desc_q.b_base;
       REG_C_BASE:    mmio_rdata_o = desc_q.c_base;
+      REG_STRIDE_A:  mmio_rdata_o = {16'd0, desc_q.stride_a};
+      REG_STRIDE_B:  mmio_rdata_o = {16'd0, desc_q.stride_b};
+      REG_STRIDE_C:  mmio_rdata_o = {16'd0, desc_q.stride_c};
       REG_MODE:      mmio_rdata_o = {desc_q.k, 14'd0, desc_q.mode};
       REG_OPCLASS:   mmio_rdata_o = {23'd0, desc_q.sparse_en, 4'd0, desc_q.op_class};
+      REG_PRECFLOW:  mmio_rdata_o = {24'd0, desc_q.dep_flags, 2'd0, desc_q.precision};
       REG_PERF_ACT:  mmio_rdata_o = perf_active_cycles_i;
       REG_PERF_IDLE: mmio_rdata_o = perf_idle_cycles_i;
       REG_PERF_DMA:  mmio_rdata_o = perf_dma_stall_cycles_i;
